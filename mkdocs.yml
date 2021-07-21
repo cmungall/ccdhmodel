@@ -13,6 +13,8 @@ nav:
   - Index: index.md
   - Data Migration: data-migration.md
   - Credits: credits.md
+markdown_extensions:
+  - attr_list
 plugins:
   - search
   - mike
