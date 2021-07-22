@@ -11,6 +11,7 @@ theme:
 nav:
   - Home: home.md
   - Index: index.md
+  - Mappings: mappings.md
   - Data Migration: data-migration.md
   - Credits: credits.md
 markdown_extensions:
