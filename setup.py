@@ -12,5 +12,5 @@ if sys.version_info < (3, 7, 0):
 setup(
 #    setup_requires=['pbr'],
 #    pbr=True,
-    version = 0.4.0
+    version = '0.4.0'
 )
