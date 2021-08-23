@@ -1,15 +1,16 @@
+import pygsheets
+
 from sheet2linkml.model import ModelElement
 from sheet2linkml.source.gsheetmodel.mappings import Mappings
 from sheet2linkml.source.gsheetmodel.entity import Entity, EntityWorksheet, Attribute
 from sheet2linkml.source.gsheetmodel.enum import EnumWorksheet, Enum
 from sheet2linkml.source.gsheetmodel.datatype import Datatype, DatatypeWorksheet
 from sheet2linkml.terminologies.service import TerminologyService
-from linkml_runtime.linkml_model.meta import SchemaDefinition
+from linkml_model.meta import SchemaDefinition
 from functools import cached_property, cache
 from datetime import datetime, timezone
 import re
 import logging
-import pygsheets
 
 
 class GSheetModel(ModelElement):
@@ -254,7 +255,7 @@ class GSheetModel(ModelElement):
         schema: SchemaDefinition = SchemaDefinition(name="CRDC-H", id=f"{root_uri}")
         schema.prefixes = {
             "linkml": "https://w3id.org/linkml/",
-            "crdch": f"{root_uri}/",
+            "ccdh": f"{root_uri}/",
             "NCIT": "http://purl.obolibrary.org/obo/NCIT_",
             "GDC": "http://example.org/gdc/",
             "PDC": "http://example.org/pdc/",
@@ -264,7 +265,7 @@ class GSheetModel(ModelElement):
         # TODO: See if we can get by without.
         # schema.imports = ['datatypes', 'prefixes']
         schema.imports = ["linkml:types"]
-        schema.default_prefix = "crdch"
+        schema.default_prefix = "ccdh"
 
         schema.license = "https://creativecommons.org/publicdomain/zero/1.0/"
         schema.notes.append(f"Derived from {self.to_markdown()}")
@@ -273,17 +274,17 @@ class GSheetModel(ModelElement):
         schema.version = self.version
 
         # Generate all the datatypes.
-        schema_types = {
+        schema.types = {
             datatype.name: datatype.as_linkml(root_uri) for datatype in self.datatypes()
         }
 
         # Generate all the entities.
-        schema_classes = {
+        schema.classes = {
             entity.name: entity.as_linkml(root_uri) for entity in self.entities()
         }
 
         # Load enums from the attributes themselves -- this will look things up in the terminology service.
-        schema_enums = {
+        schema.enums = {
             Enum.fix_enum_name(attribute.full_name): attribute.as_linkml_enum()
             for entity in self.entities()
             for attribute in entity.attributes
@@ -294,7 +295,7 @@ class GSheetModel(ModelElement):
         enum_worksheets = self.enum_worksheets()
         for enum_worksheet in enum_worksheets:
             for enum in enum_worksheet.enums:
-                schema_enums[enum.fixed_name] = enum.as_linkml(root_uri)
+                schema.enums[enum.fixed_name] = enum.as_linkml(root_uri)
 
         # At this point, classes might refer to types that haven't been defined
         # yet. So, for fields that refer to other classes in this model, we need to
@@ -302,30 +303,24 @@ class GSheetModel(ModelElement):
         #   - Warn the user about the missing type
         #   - Replace the type with 'Entity' for now.
         valid_types = (
-            set(schema_types.keys())
-            .union(set(schema_classes.keys()))
-            .union(set(schema_enums.keys()))
+            set(schema.types.keys())
+            .union(set(schema.classes.keys()))
+            .union(set(schema.enums.keys()))
         )
 
-        def fix_type_name(entity, dct, prop):
-            print(f'fix_type_name({entity}, {dct}, {prop})')
-            value = dct[prop]
+        def fix_type_name(entity, dict, propName):
+            value = dict[propName]
             if value is not None and value not in valid_types:
                 logging.warning(
-                    f"Entity {entity}'s {prop} refers to type {value}, which is not defined."
+                    f"Entity {entity}'s {propName} refers to type {value}, which is not defined."
                 )
-                dct[prop] = "Entity"
+                dict[propName] = "Entity"
 
-        for entity in schema_classes.values():
+        for entity in schema.classes.values():
             fix_type_name(entity.name, entity, "is_a")
             for attrName in entity.attributes:
                 attr = entity.attributes[attrName]
                 fix_type_name(f"{entity.name}.{attrName}", attr, "range")
-
-        # Write the lists to the schema
-        schema.types = schema_types
-        schema.classes = schema_classes
-        schema.enums = schema_enums
 
         return schema
 

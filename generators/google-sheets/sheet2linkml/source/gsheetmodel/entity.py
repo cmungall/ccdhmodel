@@ -1,11 +1,12 @@
+from linkml_model import SchemaDefinition
+
 from functools import cached_property
 from sheet2linkml.terminologies.service import TerminologyService
 from sheet2linkml.model import ModelElement
 from sheet2linkml.source.gsheetmodel.mappings import Mappings, MappingRelations
 from sheet2linkml.source.gsheetmodel.enum import Enum
 from pygsheets import worksheet
-from linkml_runtime.linkml_model.meta import (
-    SchemaDefinition,
+from linkml_model.meta import (
     ClassDefinition,
     SlotDefinition,
     EnumDefinition,
@@ -329,9 +330,9 @@ class Attribute:
         if EntityWorksheet.COL_TYPE in self.row:
             attribute_range = self.row.get(EntityWorksheet.COL_TYPE) or "string"
 
-            # For primitive types, we need to add `crdch_` to the start of the type name.
+            # For primitive types, we need to add `ccdh_` to the start of the type name.
             if attribute_range[0].islower():
-                attribute_range = f"crdch_{attribute_range}"
+                attribute_range = f"ccdh_{attribute_range}"
 
         return attribute_range
 
@@ -344,7 +345,7 @@ class Attribute:
         """
 
         # The hyphen in 'CRDC-H' doesn't work properly.
-        fixed_name = re.sub(r"^CRDC-H\.", "CRDCH.", enum_name)
+        fixed_name = re.sub(r"^CRDC-H\.", "CCDH.", enum_name)
 
         # The '.'s in the name also mess up the generated Python code.
         # But we might as well replace everything that isn't alphanumeric.

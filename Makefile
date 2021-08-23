@@ -37,7 +37,8 @@ PKG_T_CSV = $(PKG_DIR)/csv
 
 # Global generation options
 GEN_OPTS = --log_level WARNING
-ENV = export PIPENV_VENV_IN_PROJECT=true && export PIPENV_PIPFILE=make-venv/Pipfile && export PIPENV_IGNORE_VIRTUALENVS=1
+# ENV = export PIPENV_VENV_IN_PROJECT=true && export PIPENV_PIPFILE=make-venv/Pipfile && export PIPENV_IGNORE_VIRTUALENVS=1
+ENV = export PIPENV_VENV_IN_PROJECT=true && export PIPENV_PIPFILE=Pipfile && export PIPENV_IGNORE_VIRTUALENVS=1
 RUN = $(ENV) && pipenv run
 
 # ----------------------------------------
